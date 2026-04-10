@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Payroll MX"/>
+<meta name="theme-color" content="#0d1b2a"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<title>LATAM Payroll · Task Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f0f1f3;--surface:#fff;--navy:#0d1b2a;--navy2:#1b2d42;
+  --red:#c1121f;--red-bg:#fff0f1;--green:#1b7a5e;--green-bg:#edfaf4;
+  --amber:#b45309;--amber-bg:#fffbeb;--gray:#6b7280;--gray-bg:#f3f4f6;
+  --border:#e5e7eb;--text:#111827;--text2:#6b7280;
+  --fd:'Playfair Display',Georgia,serif;
+  --fb:'IBM Plex Sans','Helvetica Neue',sans-serif;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;
+  padding-top:var(--safe-top)}
+button,select,input,textarea{font-family:var(--fb)}
+button{cursor:pointer}
+textarea{cursor:text;resize:vertical}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:10px}
+
+/* HEADER */
+.hdr{background:var(--navy);padding:0 18px;position:sticky;top:0;z-index:200;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);display:flex;align-items:center;
+  justify-content:space-between;height:54px;gap:10px}
+.hdr-brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hdr-logo{width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,#c1121f,#7d0000);
+  display:flex;align-items:center;justify-content:center;font-size:15px}
+.hdr-title{font-family:var(--fd);font-size:15px;color:#fff;line-height:1}
+.hdr-sub{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;
+  letter-spacing:1px;margin-top:2px}
+.hdr-nav{display:flex;gap:2px;background:rgba(255,255,255,.08);
+  border-radius:9px;padding:3px}
+.nav-btn{padding:5px 12px;border-radius:7px;border:none;font-size:11px;
+  font-weight:600;color:rgba(255,255,255,.45);background:transparent;transition:all .15s}
+.nav-btn.active{background:#fff;color:var(--navy)}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sync-pill{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;
+  padding:5px 10px;border-radius:7px;border:1.5px solid transparent;white-space:nowrap;
+  transition:all .2s}
+.sync-pill.ok{color:var(--green);border-color:#a7f3d0;background:var(--green-bg)}
+.sync-pill.warn{color:var(--amber);border-color:#fde68a;background:var(--amber-bg);cursor:pointer}
+.sync-pill.spin{color:#0077b6;border-color:#bae6fd;background:#f0f9ff}
+.sync-pill.spin .sync-icon{display:inline-block;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-add{display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;
+  border:none;background:var(--red);color:#fff;font-size:12px;font-weight:700}
+.btn-add:active{opacity:.8}
+
+
+/* CALENDAR */
+.cal-wrap{padding:0 0 20px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-month{font-family:var(--fd);font-size:20px;color:var(--navy)}
+.cal-nav-btn{background:none;border:1.5px solid var(--border);border-radius:8px;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.cal-nav-btn:active{background:var(--bg)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{text-align:center;font-size:9px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;padding:4px 0;letter-spacing:.5px}
+.cal-day{border-radius:9px;border:1.5px solid transparent;min-height:64px;
+  padding:5px 6px;background:#fff;cursor:pointer;transition:border-color .15s;position:relative}
+.cal-day:hover{border-color:var(--navy);}
+.cal-day.today{border-color:var(--navy);background:#f0f4ff}
+.cal-day.other-month{background:transparent;border-color:transparent}
+.cal-day.other-month .cal-day-num{color:#ccc}
+.cal-day.has-tasks{box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.cal-day-num{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.cal-day.today .cal-day-num{color:var(--red)}
+.cal-dots{display:flex;flex-direction:column;gap:2px}
+.cal-dot{font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.cal-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:12px;
+  border-top:1.5px solid var(--border)}
+.cal-leg-item{display:flex;align-items:center;gap:5px;font-size:10px;
+  color:var(--text2);font-weight:600}
+.cal-leg-dot{width:8px;height:8px;border-radius:3px}
+/* Detail panel for clicked day */
+.cal-detail{background:#fff;border-radius:12px;border:1.5px solid var(--border);
+  padding:14px 16px;margin-top:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.cal-detail-title{font-family:var(--fd);font-size:15px;color:var(--navy);margin-bottom:10px}
+
+/* Hide +Nueva button on mobile */
+@media(max-width:600px){.btn-add{display:none}}
+
+/* FILTERS */
+.fbar{background:#fff;border-bottom:1.5px solid var(--border);padding:0 18px}
+.fbar-inner{display:flex;align-items:center;gap:9px;height:42px;overflow-x:auto}
+.srch{display:flex;align-items:center;gap:6px;flex:1;min-width:100px}
+.srch input{border:none;outline:none;font-size:13px;color:var(--text);
+  background:transparent;width:100%}
+.sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.fsel{font-size:11px;font-weight:600;border:1.5px solid var(--border);
+  border-radius:7px;padding:4px 8px;color:var(--text2);background:var(--bg);
+  outline:none;flex-shrink:0}
+.cnt{font-size:11px;color:var(--text2);font-weight:600;flex-shrink:0}
+
+/* MAIN */
+.main{max-width:1280px;margin:0 auto;padding:20px 18px calc(60px + var(--safe-bot))}
+
+/* MATRIX */
+.axis-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.axis-line{flex:1;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,#e5e7eb,var(--navy))}
+.axis-lbl{font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text2);flex-shrink:0}
+.matrix{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.matrix{grid-template-columns:1fr}}
+
+.quad{border-radius:14px;border:2px solid transparent;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.quad-hdr{padding:12px 15px 10px;border-bottom:2px solid transparent}
+.quad-hdr-top{display:flex;justify-content:space-between;align-items:center}
+.quad-meta{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px}
+.quad-name{font-family:var(--fd);font-size:18px;margin-top:2px}
+.quad-desc{font-size:10px;margin-top:1px;opacity:.7}
+.quad-badge{width:34px;height:34px;border-radius:9px;display:flex;
+  align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:17px;font-weight:700;color:#fff}
+.quad-body{padding:10px 12px;max-height:380px;overflow-y:auto}
+.q-empty{text-align:center;padding:16px 0;color:#ccc;font-size:11px}
+.btn-qadd{width:100%;padding:7px;border-radius:8px;border:2px dashed transparent;
+  background:transparent;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.3px;margin-top:4px}
+
+.q1{background:var(--red-bg);border-color:#fca5a5}
+.q1 .quad-hdr{background:rgba(193,18,31,.04);border-color:#fca5a5}
+.q1 .quad-meta{color:var(--red)}.q1 .quad-desc{color:#9f1239}
+.q1 .quad-badge{background:var(--red)}.q1 .btn-qadd{border-color:#fca5a5;color:var(--red)}
+
+.q2{background:var(--green-bg);border-color:#6ee7b7}
+.q2 .quad-hdr{background:rgba(27,122,94,.04);border-color:#6ee7b7}
+.q2 .quad-meta{color:var(--green)}.q2 .quad-desc{color:#065f46}
+.q2 .quad-badge{background:var(--green)}.q2 .btn-qadd{border-color:#6ee7b7;color:var(--green)}
+
+.q3{background:var(--amber-bg);border-color:#fcd34d}
+.q3 .quad-hdr{background:rgba(180,83,9,.04);border-color:#fcd34d}
+.q3 .quad-meta{color:var(--amber)}.q3 .quad-desc{color:#92400e}
+.q3 .quad-badge{background:var(--amber)}.q3 .btn-qadd{border-color:#fcd34d;color:var(--amber)}
+
+.q4{background:var(--gray-bg);border-color:#d1d5db}
+.q4 .quad-hdr{background:rgba(107,114,128,.04);border-color:#d1d5db}
+.q4 .quad-meta{color:var(--gray)}.q4 .quad-desc{color:#374151}
+.q4 .quad-badge{background:var(--gray)}.q4 .btn-qadd{border-color:#d1d5db;color:var(--gray)}
+
+/* TASK CARD */
+.card{background:#fff;border-radius:10px;border:1.5px solid var(--border);
+  padding:11px 13px;margin-bottom:7px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .15s}
+.card.ov{border-color:#fca5a5}
+.card-top{display:flex;gap:7px;align-items:flex-start}
+.card-body{flex:1;min-width:0}
+.badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;
+  text-transform:uppercase;letter-spacing:.3px}
+.b-country{background:#e0e7ff;color:#3730a3}
+.card-title{font-size:13px;font-weight:600;color:var(--navy);line-height:1.4}
+.card-desc{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
+.card-meta{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.card-cat{font-size:10px;color:var(--text2);font-weight:600}
+.card-who{font-size:10px;color:var(--text2)}
+.card-due{font-size:10px;font-weight:700;margin-left:auto}
+.card-due.ok{color:var(--green)}.card-due.warn{color:#d97706}
+.card-due.ov{color:var(--red)}.card-due.today{color:#0077b6}
+.card-notes{margin-top:7px;font-size:10px;color:var(--text2);
+  background:#f9fafb;padding:5px 9px;border-radius:7px;
+  border-left:3px solid var(--border);line-height:1.4}
+.card-actions{display:flex;gap:3px;flex-shrink:0}
+.ic-btn{background:none;border:none;padding:4px;color:#ccc;border-radius:5px}
+.ic-btn:hover,.ic-btn:active{color:var(--navy)}
+.ic-btn.del:hover,.ic-btn.del:active{color:var(--red)}
+.status-row{display:flex;gap:4px;margin-top:7px;flex-wrap:wrap}
+.st-pill{font-size:9px;padding:2px 8px;border-radius:20px;
+  border:1.5px solid transparent;font-weight:700;text-transform:uppercase}
+
+/* LIST */
+.list-group{margin-bottom:26px}
+.list-ctry{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.list-ctry-name{font-family:var(--fd);font-size:19px;color:var(--navy)}
+.list-div{flex:1;height:1px;background:var(--border)}
+.list-qg{margin-bottom:10px}
+.list-qlbl{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.list-dot{width:7px;height:7px;border-radius:50%}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.sc{background:#fff;border-radius:14px;border:1.5px solid var(--border);
+  padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.sc.wide{grid-column:span 2}
+@media(max-width:500px){.sc.wide{grid-column:span 1}}
+.sc-num{font-family:var(--fd);font-size:34px;font-weight:700;line-height:1}
+.sc-lbl{font-size:10px;color:var(--text2);margin-top:4px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px}
+.bar-row{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.bar-lbl{font-size:10px;font-weight:600;color:var(--text2);width:85px;flex-shrink:0}
+.bar-trk{flex:1;height:6px;background:#f0f1f3;border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:10px;transition:width .5s ease}
+.bar-cnt{font-size:11px;font-weight:700;color:var(--navy);width:20px;text-align:right}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.chip{padding:9px 13px;border-radius:9px}
+.chip-n{font-family:var(--fd);font-size:22px;font-weight:700;line-height:1}
+.chip-l{font-size:9px;font-weight:700;text-transform:uppercase;margin-top:3px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(13,27,42,.6);z-index:500;
+  display:flex;align-items:flex-end;justify-content:center;padding:0;
+  backdrop-filter:blur(3px)}
+@media(min-width:600px){
+  .overlay{align-items:center;padding:16px}
+  .modal{border-radius:18px!important;max-height:92vh!important;
+    border-bottom-left-radius:18px!important;border-bottom-right-radius:18px!important}
+}
+.modal{background:#fff;width:100%;max-width:540px;
+  border-radius:20px 20px 0 0;max-height:94vh;overflow-y:auto;
+  box-shadow:0 -8px 40px rgba(0,0,0,.2);
+  animation:slideUp .22s ease}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-hdr{padding:20px 22px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.modal-title{font-family:var(--fd);font-size:21px;color:var(--navy)}
+.modal-date{font-size:10px;color:var(--text2);margin-top:3px}
+.close-btn{background:none;border:none;color:#aaa;padding:4px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center}
+.modal-body{padding:16px 22px 24px;display:flex;flex-direction:column;gap:13px}
+.field label{display:block;font-size:9px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;
+  border-radius:8px;border:1.5px solid var(--border);font-size:13px;
+  color:var(--navy);background:#fafafa;outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--navy);background:#fff}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.qpick{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.qopt{padding:10px 12px;border-radius:9px;border:2px solid var(--border);
+  background:var(--bg);cursor:pointer;text-align:left;transition:all .15s}
+.qopt-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+.qopt-name{font-size:11px;color:#444;margin-top:2px}
+.modal-foot{display:flex;gap:9px}
+.btn-cancel{flex:1;padding:11px;border-radius:9px;border:1.5px solid var(--border);
+  background:#fff;color:var(--text2);font-size:13px;font-weight:600}
+.btn-save{flex:2;padding:11px;border-radius:9px;border:none;background:var(--navy);
+  color:#fff;font-size:13px;font-weight:700}
+.btn-save:active{background:var(--navy2)}
+
+/* SETUP SCREEN */
+.setup{display:flex;align-items:center;justify-content:center;
+  min-height:calc(100vh - 54px);padding:24px}
+.setup-card{background:#fff;border-radius:18px;padding:32px 28px;
+  max-width:440px;width:100%;text-align:center;
+  box-shadow:0 8px 40px rgba(0,0,0,.12);border:1.5px solid var(--border)}
+.setup-icon{font-size:44px;margin-bottom:14px}
+.setup-title{font-family:var(--fd);font-size:24px;color:var(--navy)}
+.setup-desc{font-size:12px;color:var(--text2);margin-top:8px;line-height:1.7}
+.setup-field{width:100%;padding:10px 14px;border-radius:9px;
+  border:1.5px solid var(--border);font-size:12px;margin-top:10px;
+  font-family:monospace;outline:none;background:#fafafa;color:var(--navy)}
+.setup-field:focus{border-color:var(--navy)}
+.setup-steps{text-align:left;margin:18px 0;background:var(--bg);
+  border-radius:11px;padding:14px 16px}
+.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;
+  font-size:11px;color:var(--text2);line-height:1.5}
+.step:last-child{margin-bottom:0}
+.step-n{width:19px;height:19px;border-radius:50%;background:var(--navy);
+  color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;margin-top:1px}
+.step a{color:var(--navy);font-weight:700}
+.btn-connect{display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:12px;border-radius:10px;border:none;background:var(--navy);
+  color:#fff;font-size:13px;font-weight:700;margin-top:6px}
+.btn-connect:active{background:var(--navy2)}
+.btn-skip{background:none;border:none;color:var(--text2);font-size:11px;
+  margin-top:10px;text-decoration:underline;display:block;width:100%}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(20px + var(--safe-bot));left:50%;
+  transform:translateX(-50%);background:var(--navy);color:#fff;
+  padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;
+  z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;
+  white-space:nowrap}
+.toast.show{opacity:1}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 16px;color:#ccc}
+.empty-icon{font-size:38px;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:600;color:var(--text2)}
+.empty-sub{font-size:11px;margin-top:5px}
+</style>
+</head>
+<body>
+
+<div id="root">
+  <!-- Header -->
+  <header class="hdr">
+    <div class="hdr-brand">
+      <div class="hdr-logo">🌎</div>
+      <div>
+        <div class="hdr-title">LATAM Payroll</div>
+        <div class="hdr-sub">Task Matrix</div>
+      </div>
+    </div>
+    <div class="hdr-nav">
+      <button class="nav-btn active" onclick="setView('matrix')">Matriz</button>
+      <button class="nav-btn" onclick="setView('list')">Lista</button>
+      <button class="nav-btn" onclick="setView('stats')">Stats</button>
+      <button class="nav-btn" onclick="setView('cal')">Cal</button>
+    </div>
+    <div class="hdr-right">
+      <div id="syncPill" class="sync-pill warn" onclick="openSetup()">
+        <span>⚠</span><span id="syncTxt">Sin sync</span>
+      </div>
+      <button class="btn-add" onclick="openModal()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva
+      </button>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <div class="fbar">
+    <div class="fbar-inner">
+      <div class="srch">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="srchIn" placeholder="Buscar..." oninput="render()"/>
+      </div>
+      <div class="sep"></div>
+      <select class="fsel" id="fcountry" onchange="render()">
+        <option value="">Pais: Todos</option>
+      </select>
+      <select class="fsel" id="fstatus" onchange="render()">
+        <option value="">Estado: Todos</option>
+        <option>Pendiente</option><option>En Proceso</option>
+        <option>Bloqueada</option><option>Completada</option><option>Cancelada</option>
+      </select>
+      <select class="fsel" id="fquad" onchange="render()">
+        <option value="">Q: Todos</option>
+        <option value="Q1">Q1 Hacer</option>
+        <option value="Q2">Q2 Planif.</option>
+        <option value="Q3">Q3 Delegar</option>
+        <option value="Q4">Q4 Elim.</option>
+      </select>
+      <span class="cnt" id="cntBadge">0 tareas</span>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <main class="main" id="mainContent"></main>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" style="display:none" onclick="closeOverlay(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="modalTitle">Nueva tarea</div>
+        <div class="modal-date" id="modalDate"></div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tid"/>
+      <div class="field">
+        <label>Tarea *</label>
+        <input id="ftitle" placeholder="Ej: Validar cierre payroll Brasil"/>
+      </div>
+      <div class="field">
+        <label>Descripcion</label>
+        <textarea id="fdesc" rows="2" placeholder="Detalle..."></textarea>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label>Pais</label>
+          <select id="fcountryF"></select>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <select id="fcatF"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Cuadrante Eisenhower</label>
+        <div class="qpick" id="qpick"></div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label>Estado</label>
+          <select id="fstatusF">
+            <option>Pendiente</option><option>En Proceso</option>
+            <option>Bloqueada</option><option>Completada</option><option>Cancelada</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Fecha limite</label>
+          <input type="date" id="fdue"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Responsable / Contacto</label>
+        <input id="fassigned" placeholder="Ej: Daniela Maciel · ITOS"/>
+      </div>
+      <div class="field">
+        <label>Notas de seguimiento</label>
+        <textarea id="fnotes" rows="2" placeholder="Actualizaciones, bloqueantes..."></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveTask()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Setup modal -->
+<div class="overlay" id="setupOverlay" style="display:none" onclick="closeSetupOverlay(event)">
+  <div class="modal" style="border-radius:20px 20px 0 0">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">Conectar sincronizacion</div>
+        <div class="modal-date">GitHub Gist como base de datos gratuita</div>
+      </div>
+      <button class="close-btn" onclick="closeSetup()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="setup-steps">
+        <div class="step"><div class="step-n">1</div><span>Ve a <a href="https://github.com" target="_blank">github.com</a> y crea una cuenta gratuita</span></div>
+        <div class="step"><div class="step-n">2</div><span>En tu perfil > Settings > Developer Settings > Personal access tokens > Tokens (classic) > Generate new token</span></div>
+        <div class="step"><div class="step-n">3</div><span>Ponle nombre "payroll-sync", activa solo el permiso <strong>gist</strong>, genera y copia el token</span></div>
+        <div class="step"><div class="step-n">4</div><span>Pega el token aqui abajo y haz clic en Conectar. La primera vez crea el Gist automaticamente.</span></div>
+      </div>
+      <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <input id="ghToken" class="setup-field" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" type="password"/>
+      </div>
+      <button class="btn-connect" onclick="connectGist()">Conectar y sincronizar</button>
+      <button class="btn-skip" onclick="closeSetup()">Continuar sin sincronizacion (solo local)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const COUNTRIES = ["Brasil","Peru","Colombia","Panama","Chile","Argentina","Mexico","LATAM"];
+const CATS = ["Payroll Cycle","ITOS/Vendor","Dayforce/GMS","eSocial/Compliance","Off-Cycle","Reporting","Escalation","Change Request","Other"];
+const QS = {
+  Q1:{id:"Q1",meta:"URGENTE · IMPORTANTE",name:"Hacer ahora",desc:"Crisis y deadlines",color:"#c1121f",cls:"q1"},
+  Q2:{id:"Q2",meta:"NO URGENTE · IMPORTANTE",name:"Planificar",desc:"Desarrollo y estrategia",color:"#1b7a5e",cls:"q2"},
+  Q3:{id:"Q3",meta:"URGENTE · NO IMPORTANTE",name:"Delegar",desc:"Interrupciones y reuniones",color:"#b45309",cls:"q3"},
+  Q4:{id:"Q4",meta:"NO URGENTE · NO IMPORTANTE",name:"Eliminar",desc:"Distracciones",color:"#6b7280",cls:"q4"},
+};
+const ST_COLORS = {
+  "Pendiente":"#6b7280","En Proceso":"#0077b6",
+  "Bloqueada":"#c1121f","Completada":"#1b7a5e","Cancelada":"#9ca3af"
+};
+const LS = "latam_tasks_v4";
+const LS_DEL = "latam_deleted_v4";  // tracks deleted task IDs + timestamp
+const LS_GH = "latam_gh_token";
+
+const GIST_FILE = "latam_payroll_tasks.json";
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let tasks = [];
+let view = "matrix";
+let editId = null;
+let selQ = "Q1";
+let ghToken = localStorage.getItem(LS_GH) || "";
+const GIST_ID = "e575601b22bdca2f5807a11f4783ad73";
+let syncTimer = null;
+
+// ─── DATE ─────────────────────────────────────────────────────────────────────
+const tod = () => new Date().toISOString().split("T")[0];
+const fmtD = d => { if(!d) return ""; const[y,m,day]=d.split("-"); return `${day}/${m}/${y}`; };
+const daysLeft = d => { if(!d) return null; return Math.ceil((new Date(d)-new Date(tod()))/86400000); };
+let seq = Date.now();
+const uid = () => `t${++seq}`;
+const esc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, dur=2200) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), dur);
+}
+
+// ─── LOCAL STORAGE ────────────────────────────────────────────────────────────
+const loadLocal = () => { try { return JSON.parse(localStorage.getItem(LS)) || []; } catch { return []; } };
+const saveLocal = d => { try { localStorage.setItem(LS, JSON.stringify(d)); } catch {} };
+// Deleted registry: { id -> deletedAt ISO string }
+const loadDeleted = () => { try { return JSON.parse(localStorage.getItem(LS_DEL)) || {}; } catch { return {}; } };
+const saveDeleted = d => { try { localStorage.setItem(LS_DEL, JSON.stringify(d)); } catch {} };
+let deletedRegistry = loadDeleted();
+
+// ─── GITHUB GIST SYNC ─────────────────────────────────────────────────────────
+function setSyncPill(state) {
+  const p = document.getElementById("syncPill");
+  const t = document.getElementById("syncTxt");
+  p.className = "sync-pill";
+  if (state === "ok") {
+    p.classList.add("ok"); t.textContent = "Sincronizado";
+    p.querySelector("span:first-child").textContent = "✓";
+    p.onclick = openSetup;
+  } else if (state === "sync") {
+    p.classList.add("spin"); t.textContent = "Sincronizando";
+    p.querySelector("span:first-child").innerHTML = '<span class="sync-icon">↻</span>';
+    p.onclick = null;
+  } else {
+    p.classList.add("warn"); t.textContent = ghToken ? "Error sync" : "Sin sync";
+    p.querySelector("span:first-child").textContent = "⚠";
+    p.onclick = openSetup;
+  }
+}
+
+
+// Fetch gist content - always bypass cache
+async function fetchGistContent() {
+  if (!ghToken) return null;
+  try {
+    const resp = await fetch(`https://api.github.com/gists/${GIST_ID}?_=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Authorization": `token ${ghToken}`, "Accept": "application/vnd.github.v3+json" }
+    });
+    if (!resp.ok) return null;
+    const gist = await resp.json();
+    const raw = gist.files[GIST_FILE]?.content;
+    if (!raw || raw.trim() === "") return { tasks: [], deleted: {}, gistUpdatedAt: gist.updated_at };
+    const parsed = JSON.parse(raw);
+    // Support both old format (array) and new format ({ tasks, deleted })
+    if (Array.isArray(parsed)) return { tasks: parsed, deleted: {}, gistUpdatedAt: gist.updated_at };
+    return {
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+      deleted: parsed.deleted || {},
+      gistUpdatedAt: gist.updated_at
+    };
+  } catch(e) {
+    console.warn("Gist fetch error:", e);
+    return null;
+  }
+}
+
+// Merge local tasks with remote, respecting deletions from both sides.
+// deletedRegistry: { taskId: "ISO deletedAt" } - tasks intentionally deleted
+function mergeWithRemote(local, remote, remoteDeleted) {
+  // Merge deleted registries: union, keep most recent deletedAt per id
+  const mergedDeleted = Object.assign({}, deletedRegistry);
+  Object.entries(remoteDeleted || {}).forEach(([id, remoteTs]) => {
+    if (!mergedDeleted[id] || remoteTs > mergedDeleted[id]) {
+      mergedDeleted[id] = remoteTs;
+    }
+  });
+  deletedRegistry = mergedDeleted;
+  saveDeleted(deletedRegistry);
+
+  // Build task map: union of local + remote, newest updatedAt wins per id
+  const map = {};
+  local.forEach(t => { map[t.id] = t; });
+  remote.forEach(rt => {
+    const lt = map[rt.id];
+    if (!lt || (rt.updatedAt || "") >= (lt.updatedAt || "")) {
+      map[rt.id] = rt;
+    }
+  });
+
+  // Remove any task that appears in the merged deleted registry,
+  // UNLESS the task was updated AFTER it was deleted (re-created)
+  return Object.values(map).filter(t => {
+    const deletedAt = deletedRegistry[t.id];
+    if (!deletedAt) return true;           // never deleted
+    return (t.updatedAt || "") > deletedAt; // re-created after deletion
+  });
+}
+
+async function saveToGist() {
+  if (!ghToken) return;
+  setSyncPill("sync");
+  try {
+    // Save both tasks and deleted registry so all devices know what was deleted
+    const payload = { tasks, deleted: deletedRegistry };
+    const content = JSON.stringify(payload, null, 2);
+    const resp = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: "PATCH",
+      headers: { "Authorization": `token ${ghToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ files: { [GIST_FILE]: { content } } })
+    });
+    if (!resp.ok) throw new Error("Patch gist failed " + resp.status);
+    lastGistUpdatedAt = new Date().toISOString();
+    setSyncPill("ok");
+  } catch(e) {
+    console.warn("Gist save error:", e);
+    setSyncPill("error");
+    toast("Error al guardar. Datos locales seguros.");
+  }
+}
+
+// Persist: save local immediately, push to Gist after 1.5s debounce
+function persist() {
+  saveLocal(tasks);
+  if (!ghToken) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => saveToGist(), 1500);
+}
+
+// ─── POLLING ──────────────────────────────────────────────────────────────────
+let pollInterval = null;
+let lastGistUpdatedAt = null;
+
+async function pollGist(silent) {
+  if (!ghToken) return;
+  try {
+    const result = await fetchGistContent();
+    if (!result) return;
+    const { tasks: remote, gistUpdatedAt } = result;
+
+    // Skip if nothing changed on remote since last pull
+    if (gistUpdatedAt && gistUpdatedAt === lastGistUpdatedAt) return;
+    lastGistUpdatedAt = gistUpdatedAt;
+
+    const merged = mergeWithRemote(tasks, remote, result.deleted || {});
+
+    // Only re-render if something actually changed
+    const changed = JSON.stringify(merged.map(t=>t.id+t.updatedAt).sort()) !==
+                    JSON.stringify(tasks.map(t=>t.id+t.updatedAt).sort());
+    if (changed) {
+      tasks = merged;
+      saveLocal(tasks);
+      render();
+      if (!silent) toast("Actualizado desde otro dispositivo ✓");
+    }
+    setSyncPill("ok");
+  } catch(e) { /* ignore */ }
+}
+
+function startPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(() => pollGist(false), 20000); // every 20s
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  // Populate selects
+  const fcountry = document.getElementById("fcountry");
+  const fcountryF = document.getElementById("fcountryF");
+  COUNTRIES.forEach(c => {
+    fcountry.innerHTML += `<option value="${c}">${c}</option>`;
+    fcountryF.innerHTML += `<option>${c}</option>`;
+  });
+  document.getElementById("fcatF").innerHTML +=
+    CATS.map(c => `<option>${c}</option>`).join("");
+
+  // 1. Show local data immediately
+  tasks = loadLocal();
+  render();
+
+  if (ghToken) {
+    setSyncPill("sync");
+    // 2. Pull from Gist - source of truth
+    const result = await fetchGistContent();
+    if (result) {
+      // Merge remote into local (handles new device with 0 local tasks correctly)
+      tasks = mergeWithRemote(tasks, result.tasks, result.deleted || {});
+      lastGistUpdatedAt = result.gistUpdatedAt;
+      saveLocal(tasks);
+      render();
+      setSyncPill("ok");
+    } else {
+      setSyncPill("error");
+    }
+    startPolling();
+  } else {
+    setSyncPill("warn");
+  }
+
+  // Pull immediately when app/tab becomes visible
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && ghToken) {
+      pollGist(true);
+    }
+  });
+
+  // PWA service worker - only for offline shell, NOT caching app logic
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+}
+
+// ─── SETUP MODAL ──────────────────────────────────────────────────────────────
+function openSetup() {
+  document.getElementById("ghToken").value = ghToken;
+  document.getElementById("setupOverlay").style.display = "flex";
+}
+function closeSetup() { document.getElementById("setupOverlay").style.display = "none"; }
+function closeSetupOverlay(e) { if(e.target.id==="setupOverlay") closeSetup(); }
+
+async function connectGist() {
+  const token = document.getElementById("ghToken").value.trim();
+  if (!token) { toast("Pega tu token primero"); return; }
+  ghToken = token;
+  localStorage.setItem(LS_GH, token);
+  // GIST_ID is hardcoded
+  closeSetup();
+  setSyncPill("sync");
+  toast("Conectando con GitHub...", 3000);
+  // Push current tasks to new gist
+  await saveToGist();
+  startPolling();
+  toast("Sincronizacion activa ✓");
+}
+
+// ─── VIEW ─────────────────────────────────────────────────────────────────────
+function setView(v) {
+  view = v;
+  document.querySelectorAll(".nav-btn").forEach((b,i) => {
+    b.classList.toggle("active", ["matrix","list","stats","cal"][i] === v);
+  });
+  render();
+}
+
+function getFiltered() {
+  const s = document.getElementById("srchIn").value.toLowerCase();
+  const fc = document.getElementById("fcountry").value;
+  const fs = document.getElementById("fstatus").value;
+  const fq = document.getElementById("fquad").value;
+  return tasks.filter(t => {
+    if (fc && t.country !== fc) return false;
+    if (fs && t.status !== fs) return false;
+    if (fq && t.quadrant !== fq) return false;
+    if (s && !t.title.toLowerCase().includes(s) &&
+        !(t.country||"").toLowerCase().includes(s) &&
+        !(t.assignedTo||"").toLowerCase().includes(s)) return false;
+    return true;
+  });
+}
+
+function render() {
+  const f = getFiltered();
+  document.getElementById("cntBadge").textContent = `${f.length} tarea${f.length!==1?"s":""}`;
+  const main = document.getElementById("mainContent");
+  if (view === "matrix") main.innerHTML = renderMatrix(f);
+  else if (view === "list") main.innerHTML = renderList(f);
+  else if (view === "stats") main.innerHTML = renderStats(f);
+  else main.innerHTML = renderCal(f);
+}
+
+// ─── MATRIX ───────────────────────────────────────────────────────────────────
+function renderMatrix(f) {
+  return `
+  <div class="axis-row">
+    <span class="axis-lbl" style="color:#aaa">← Importancia baja</span>
+    <div class="axis-line"></div>
+    <span class="axis-lbl">Importancia alta →</span>
+  </div>
+  <div class="matrix">
+    ${Object.values(QS).map(q => {
+      const qt = f.filter(t=>t.quadrant===q.id);
+      return `
+      <div class="quad ${q.cls}">
+        <div class="quad-hdr">
+          <div class="quad-hdr-top">
+            <div>
+              <div class="quad-meta">${q.meta}</div>
+              <div class="quad-name">${q.name}</div>
+              <div class="quad-desc">${q.desc}</div>
+            </div>
+            <div class="quad-badge" style="background:${q.color}">${qt.length}</div>
+          </div>
+        </div>
+        <div class="quad-body">
+          ${qt.length ? qt.map(t=>cardHtml(t)).join("") : `<div class="q-empty">Sin tareas</div>`}
+          <button class="btn-qadd" style="border-color:${q.color};color:${q.color}"
+            onclick="openModal('${q.id}')">+ Agregar aqui</button>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+// ─── LIST ─────────────────────────────────────────────────────────────────────
+function renderList(f) {
+  if (!f.length) return emptyHtml();
+  return COUNTRIES.filter(c=>f.some(t=>t.country===c)).map(country => {
+    const ct = f.filter(t=>t.country===country);
+    return `
+    <div class="list-group">
+      <div class="list-ctry">
+        <div class="list-ctry-name">${country}</div>
+        <div class="list-div"></div>
+        <span style="font-size:10px;color:var(--text2);font-weight:600">${ct.length} tarea${ct.length!==1?"s":""}</span>
+      </div>
+      ${Object.values(QS).filter(q=>ct.some(t=>t.quadrant===q.id)).map(q => {
+        const qt = ct.filter(t=>t.quadrant===q.id);
+        return `
+        <div class="list-qg">
+          <div class="list-qlbl">
+            <div class="list-dot" style="background:${q.color}"></div>
+            <span style="color:${q.color}">${q.name}</span>
+            <span style="color:var(--text2)">— ${q.meta}</span>
+          </div>
+          ${qt.map(t=>cardHtml(t)).join("")}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }).join("") || emptyHtml();
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function renderStats(f) {
+  const tot = f.length;
+  const comp = f.filter(t=>t.status==="Completada").length;
+  const ov = f.filter(t=>{ const d=daysLeft(t.dueDate); return d!==null&&d<0&&t.status!=="Completada"; }).length;
+  const rate = tot ? Math.round((comp/tot)*100) : 0;
+  const bar = (lbl,val,color) => `
+    <div class="bar-row">
+      <div class="bar-lbl">${lbl}</div>
+      <div class="bar-trk"><div class="bar-fill" style="width:${tot?Math.round((val/tot)*100):0}%;background:${color}"></div></div>
+      <div class="bar-cnt">${val}</div>
+    </div>`;
+  const byC = COUNTRIES.map(c=>({n:c,v:f.filter(t=>t.country===c).length})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+  const byQ = Object.values(QS).map(q=>({n:q.name,v:f.filter(t=>t.quadrant===q.id).length,c:q.color}));
+  const byS = ["Pendiente","En Proceso","Bloqueada","Completada","Cancelada"]
+    .map(s=>({n:s,v:f.filter(t=>t.status===s).length,c:ST_COLORS[s]})).filter(x=>x.v>0);
+  return `
+  <div class="stats-grid">
+    ${[
+      {l:"Total tareas",v:tot,c:"var(--navy)"},
+      {l:"Completadas",v:comp,c:"var(--green)"},
+      {l:"Vencidas",v:ov,c:"var(--red)"},
+      {l:"Completado",v:rate+"%",c:"#0077b6"},
+    ].map(k=>`<div class="sc"><div class="sc-num" style="color:${k.c}">${k.v}</div><div class="sc-lbl">${k.l}</div></div>`).join("")}
+    <div class="sc wide">
+      <div class="sc-lbl" style="margin-bottom:13px">Por cuadrante</div>
+      ${byQ.map(q=>bar(q.n,q.v,q.c)).join("")}
+    </div>
+    <div class="sc wide">
+      <div class="sc-lbl" style="margin-bottom:13px">Por pais</div>
+      ${byC.map(c=>bar(c.n,c.v,"#0077b6")).join("") || "<div style='color:#ccc;font-size:11px'>Sin datos</div>"}
+    </div>
+    <div class="sc wide">
+      <div class="sc-lbl">Por estado</div>
+      <div class="chips">
+        ${byS.map(s=>`
+          <div class="chip" style="background:${s.c}15;border:1.5px solid ${s.c}35">
+            <div class="chip-n" style="color:${s.c}">${s.v}</div>
+            <div class="chip-l" style="color:${s.c}">${s.n}</div>
+          </div>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── CARD HTML ─────────────────────────────────────────────────────────────────
+function cardHtml(t) {
+  const dl = daysLeft(t.dueDate);
+  const isOv = dl !== null && dl < 0 && t.status !== "Completada";
+  let dueTxt="", dueCls="ok";
+  if (t.dueDate) {
+    if (isOv) { dueTxt=`Vencida ${Math.abs(dl)}d`; dueCls="ov"; }
+    else if (dl===0) { dueTxt="Hoy"; dueCls="today"; }
+    else if (dl<=2) { dueTxt=`${dl}d`; dueCls="warn"; }
+    else { dueTxt=`${dl}d`; dueCls="ok"; }
+  }
+  const sc = ST_COLORS[t.status];
+  const others = ["Pendiente","En Proceso","Bloqueada","Completada","Cancelada"].filter(s=>s!==t.status);
+  return `
+  <div class="card ${isOv?"ov":""}">
+    <div class="card-top">
+      <div class="card-body">
+        <div class="badges">
+          <span class="badge b-country">${t.country}</span>
+          <span class="badge" style="background:${sc}18;color:${sc}">${t.status}</span>
+        </div>
+        <div class="card-title">${esc(t.title)}</div>
+        ${t.description?`<div class="card-desc">${esc(t.description)}</div>`:""}
+      </div>
+      <div class="card-actions">
+        <button class="ic-btn" onclick="openModal(null,'${t.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="ic-btn del" onclick="delTask('${t.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="card-meta">
+      <span class="card-cat">${t.category}</span>
+      ${t.assignedTo?`<span class="card-who">· ${esc(t.assignedTo)}</span>`:""}
+      ${dueTxt?`<span class="card-due ${dueCls}">${dueTxt}</span>`:""}
+    </div>
+    ${t.notes?`<div class="card-notes">${esc(t.notes)}</div>`:""}
+    <div class="status-row">
+      ${others.map(s=>`
+        <button class="st-pill" style="background:${ST_COLORS[s]}12;border-color:${ST_COLORS[s]}40;color:${ST_COLORS[s]}"
+          onclick="quickSt('${t.id}','${s}')">→ ${s}</button>`).join("")}
+    </div>
+  </div>`;
+}
+
+function emptyHtml() {
+  return `<div class="empty"><div class="empty-icon">📋</div>
+    <div class="empty-title">Sin tareas</div>
+    <div class="empty-sub">Agrega tu primera tarea con el boton superior</div></div>`;
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function buildQPick() {
+  document.getElementById("qpick").innerHTML = Object.values(QS).map(q => `
+    <button type="button" class="qopt" id="qo_${q.id}" onclick="selQopt('${q.id}')"
+      style="${selQ===q.id?`border-color:${q.color};background:${q.color}12`:""}">
+      <div class="qopt-tag" style="color:${q.color}">${q.name}</div>
+      <div class="qopt-name">${q.meta}</div>
+    </button>`).join("");
+}
+function selQopt(qid) {
+  selQ = qid;
+  document.querySelectorAll(".qopt").forEach(el => {
+    const id = el.id.replace("qo_","");
+    const q = QS[id];
+    el.style.borderColor = id===qid ? q.color : "var(--border)";
+    el.style.background = id===qid ? q.color+"12" : "var(--bg)";
+  });
+}
+
+function openModal(qId, taskId) {
+  editId = taskId || null;
+  selQ = qId || "Q1";
+  document.getElementById("modalDate").textContent = `Fecha: ${fmtD(tod())}`;
+  if (taskId) {
+    const t = tasks.find(x=>x.id===taskId); if(!t) return;
+    document.getElementById("modalTitle").textContent = "Editar tarea";
+    document.getElementById("tid").value = t.id;
+    document.getElementById("ftitle").value = t.title||"";
+    document.getElementById("fdesc").value = t.description||"";
+    document.getElementById("fcountryF").value = t.country||"LATAM";
+    document.getElementById("fcatF").value = t.category||"Payroll Cycle";
+    document.getElementById("fstatusF").value = t.status||"Pendiente";
+    document.getElementById("fdue").value = t.dueDate||"";
+    document.getElementById("fassigned").value = t.assignedTo||"";
+    document.getElementById("fnotes").value = t.notes||"";
+    selQ = t.quadrant||"Q1";
+  } else {
+    document.getElementById("modalTitle").textContent = "Nueva tarea";
+    ["tid","ftitle","fdesc","fdue","fassigned","fnotes"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    document.getElementById("fcountryF").value = "LATAM";
+    document.getElementById("fcatF").value = "Payroll Cycle";
+    document.getElementById("fstatusF").value = "Pendiente";
+  }
+  buildQPick();
+  document.getElementById("overlay").style.display = "flex";
+  setTimeout(() => document.getElementById("ftitle").focus(), 100);
+}
+
+function closeModal() { document.getElementById("overlay").style.display = "none"; }
+function closeOverlay(e) { if(e.target.id==="overlay") closeModal(); }
+
+function saveTask() {
+  const title = document.getElementById("ftitle").value.trim();
+  if (!title) { toast("Escribe un nombre para la tarea"); return; }
+  const task = {
+    id: editId || uid(),
+    title,
+    description: document.getElementById("fdesc").value.trim(),
+    country: document.getElementById("fcountryF").value,
+    category: document.getElementById("fcatF").value,
+    status: document.getElementById("fstatusF").value,
+    dueDate: document.getElementById("fdue").value,
+    assignedTo: document.getElementById("fassigned").value.trim(),
+    notes: document.getElementById("fnotes").value.trim(),
+    quadrant: selQ,
+    createdAt: editId ? (tasks.find(t=>t.id===editId)||{}).createdAt||tod() : tod(),
+    updatedAt: tod()
+  };
+  tasks = editId ? tasks.map(t=>t.id===editId?task:t) : [...tasks, task];
+  closeModal();
+  render();
+  persist();
+  toast(editId ? "Tarea actualizada" : "Tarea creada ✓");
+}
+
+function delTask(id) {
+  if (!confirm("Eliminar esta tarea?")) return;
+  // Record deletion timestamp so other devices know this was intentionally removed
+  deletedRegistry[id] = new Date().toISOString();
+  saveDeleted(deletedRegistry);
+  tasks = tasks.filter(t=>t.id!==id);
+  render(); persist(); toast("Tarea eliminada");
+}
+
+function quickSt(id, status) {
+  tasks = tasks.map(t=>t.id===id?{...t,status,updatedAt:tod()}:t);
+  render(); persist();
+}
+
+
+// ─── CALENDAR ─────────────────────────────────────────────────────────────────
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-indexed
+let calSelectedDay = null;
+
+const MONTHS_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DAYS_ES = ["Dom","Lun","Mar","Mie","Jue","Vie","Sab"];
+
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} calSelectedDay=null; render(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} calSelectedDay=null; render(); }
+function calSelectDay(d) { calSelectedDay = calSelectedDay===d ? null : d; render(); }
+
+function renderCal(filtered) {
+  const todayStr = tod();
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  // Build map: "YYYY-MM-DD" -> tasks[]
+  const tasksByDay = {};
+  filtered.forEach(t => {
+    if (!t.dueDate) return;
+    if (!tasksByDay[t.dueDate]) tasksByDay[t.dueDate] = [];
+    tasksByDay[t.dueDate].push(t);
+  });
+
+  // Header
+  let html = `<div class="cal-wrap">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calPrev()">&#8249;</button>
+      <div class="cal-month">${MONTHS_ES[calMonth]} ${calYear}</div>
+      <button class="cal-nav-btn" onclick="calNext()">&#8250;</button>
+    </div>
+    <div class="cal-grid">`;
+
+  // Day of week headers
+  DAYS_ES.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+
+  // Previous month padding
+  for (let i = 0; i < firstDay; i++) {
+    const d = daysInPrev - firstDay + 1 + i;
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(calMonth+1).padStart(2,"0");
+    const dd = String(d).padStart(2,"0");
+    const dateStr = `${calYear}-${mm}-${dd}`;
+    const dayTasks = tasksByDay[dateStr] || [];
+    const isToday = dateStr === todayStr;
+    const isSel = calSelectedDay === dateStr;
+    const hasTasks = dayTasks.length > 0;
+
+    const dots = dayTasks.slice(0,3).map(t => {
+      const q = QS[t.quadrant];
+      return `<div class="cal-dot" style="background:${q.color}20;color:${q.color}">${esc(t.title)}</div>`;
+    }).join("") + (dayTasks.length > 3 ? `<div style="font-size:9px;color:var(--text2);font-weight:600">+${dayTasks.length-3} mas</div>` : "");
+
+    html += `<div class="cal-day ${isToday?"today":""} ${hasTasks?"has-tasks":""} ${isSel?"today":""}"
+      onclick="calSelectDay('${dateStr}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-dots">${dots}</div>
+    </div>`;
+  }
+
+  // Next month padding to complete grid
+  const totalCells = firstDay + daysInMonth;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+  }
+
+  html += `</div>`; // end grid
+
+  // Legend
+  html += `<div class="cal-legend">
+    ${Object.values(QS).map(q=>`
+      <div class="cal-leg-item">
+        <div class="cal-leg-dot" style="background:${q.color}"></div>${q.name}
+      </div>`).join("")}
+  </div>`;
+
+  // Selected day detail panel
+  if (calSelectedDay && tasksByDay[calSelectedDay]) {
+    const [y,m,d] = calSelectedDay.split("-");
+    html += `<div class="cal-detail">
+      <div class="cal-detail-title">${parseInt(d)} de ${MONTHS_ES[parseInt(m)-1]} — ${tasksByDay[calSelectedDay].length} tarea${tasksByDay[calSelectedDay].length!==1?"s":""}</div>
+      ${tasksByDay[calSelectedDay].map(t => cardHtml(t)).join("")}
+    </div>`;
+  } else if (calSelectedDay) {
+    const [y,m,d] = calSelectedDay.split("-");
+    html += `<div class="cal-detail" style="text-align:center;color:var(--text2)">
+      <div style="font-size:12px;margin-bottom:8px;font-weight:600">${parseInt(d)} de ${MONTHS_ES[parseInt(m)-1]}</div>
+      <div style="font-size:11px">Sin tareas con fecha limite en este dia</div>
+      <button style="margin-top:10px;padding:7px 14px;border-radius:8px;border:none;
+        background:var(--navy);color:#fff;font-size:11px;font-weight:700"
+        onclick="openModal()">+ Nueva tarea</button>
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
